@@ -45,7 +45,7 @@ const navigation = [
     permissions: ["view_sales"],
   },
   {
-    name: "Expenses",
+    name: "Finance",
     href: "/expenses",
     icon: DollarSign,
     permissions: ["view_expenses"],

@@ -382,6 +382,18 @@ const toNumber = (val: number | string | undefined): number => {
         <div style={{ marginTop: '10px', fontSize: '10px' }}>
           Receipt ID: {transactionId} • Printed: {new Date().toLocaleString()}
         </div>
+        <div style={{ marginTop: '2px', fontSize: '10px' }}>
+          <span>
+           Qodebyte Digital Solutions. All rights reserved.
+          </span>
+
+          <span >
+            Powered by
+            <span>
+              Qodebyte Digital Solutions 
+            </span>
+    </span>
+        </div>
       </div>
     </div>
   );
