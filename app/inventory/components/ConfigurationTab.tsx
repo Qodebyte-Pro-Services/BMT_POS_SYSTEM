@@ -407,7 +407,7 @@ export function ConfigureTab() {
 
     try {
       const token = getToken();
-      const response = await fetch(`${apiUrl}/discounts/${editingDiscount.id}`, {
+      const response = await fetch(`${apiUrl}/sales/discounts/${editingDiscount.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -433,7 +433,7 @@ export function ConfigureTab() {
 
     try {
       const token = getToken();
-      const response = await fetch(`${apiUrl}/discounts/${String(id)}`, {
+      const response = await fetch(`${apiUrl}/sales/discounts/${String(id)}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -519,7 +519,7 @@ export function ConfigureTab() {
       const link = discountLinks.find(l => l.id === linkId);
       if (!link) return;
 
-      const response = await fetch(`${apiUrl}/discounts/${link.discount_id}`, {
+      const response = await fetch(`${apiUrl}/sales/discounts/${link.discount_id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
