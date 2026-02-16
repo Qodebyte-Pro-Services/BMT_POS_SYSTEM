@@ -1,4 +1,5 @@
 import { DollarSign, Home, Package, Settings, ShoppingCart, Users, Workflow } from "lucide-react";
+import { ImageUrl } from "./imageHelper";
 
 
 export interface ProductAttribute {
@@ -72,7 +73,7 @@ export interface ProductVariantDetails {
   selling_price: string;
   quantity: number;
   threshold: number;
-  image_url: string[];
+   image_url?: string | ImageUrl[];
 }
 
 export interface Product {

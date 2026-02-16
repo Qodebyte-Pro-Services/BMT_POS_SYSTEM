@@ -8,6 +8,7 @@ import { ShoppingCart, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 
 import Image from 'next/image';  
 import { VariantWithProduct } from './useVariants';
+import { parseImageUrl } from '@/app/utils/imageHelper';
 
 interface ProductGridProps {
   variants: VariantWithProduct[];
@@ -63,6 +64,8 @@ const getStockStatus = (
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
+
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       {variants.length === 0 ? (
@@ -77,7 +80,8 @@ const getStockStatus = (
             {paginatedVariants.map((variant) => {
   
               const status = getStockStatus(variant.quantity, variant.threshold);
-              
+                const images = parseImageUrl(variant.image_url);
+              const imagePath = images[0]?.url;
               return (
                 <Card 
                   key={variant.variant_id} 
@@ -87,10 +91,10 @@ const getStockStatus = (
                 >
          
                   <div className="relative aspect-square overflow-hidden p-1 bg-gray-100">
-                  {variant.image_url && variant.image_url.length > 0 ? (
-              
+                    {imagePath ? (
+                    
                       <Image
-                        src={`${apiBaseUrl}${variant.image_url[0].url}`}
+                          src={`${apiBaseUrl}${imagePath}`}
                         width={200}
                         height={200}
                         alt={variant.product_name}

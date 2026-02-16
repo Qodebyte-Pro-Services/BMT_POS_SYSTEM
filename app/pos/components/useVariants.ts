@@ -1,5 +1,6 @@
 'use client';
 
+import { ImageUrl } from '@/app/utils/imageHelper';
 import { useState, useEffect } from 'react';
 
 export interface VariantWithProduct {
@@ -15,7 +16,7 @@ export interface VariantWithProduct {
   quantity: number;
   threshold: number;
    taxable: boolean;
-  image_url?: Array<{ url: string; filename: string }>;
+   image_url?: string | ImageUrl[];
   attributes?: Record<string, string>;
 }
 

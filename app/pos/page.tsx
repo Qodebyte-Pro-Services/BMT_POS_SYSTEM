@@ -23,6 +23,8 @@ import { useDiscounts } from './components/useDiscount';
 import { useOfflineSync } from './components/useOfflineSync';
 import { useWalkInCustomer } from './components/useWalkInCustomer';
 import { useCustomers } from './components/useCustomers';
+import { parse } from 'path';
+import { getVariantImage, parseImageUrl } from '../utils/imageHelper';
 
 export default function POSPage() {
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
@@ -155,7 +157,7 @@ export default function POSPage() {
           price: parseFloat(String(variant.selling_price)),
           quantity: 1,
           taxable: variant.taxable,
-          image: variant.image_url?.[0]?.url || '',
+          image: getVariantImage(variant.image_url),
           stock: variant.quantity,
         productDiscount: discount ? {
             id: discount.id,

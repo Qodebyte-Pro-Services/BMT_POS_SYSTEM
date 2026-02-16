@@ -12,6 +12,7 @@ import { StockMovementTab } from '../components/StockMovementTab';
 import { VariantsTab } from '../components/VariantsTab';
 import { Product, ProductVariant, ProductVariantDetails } from '@/app/utils/type';
 import { toast } from 'sonner';
+import { ImageUrl, parseImageUrl } from '@/app/utils/imageHelper';
 
 
 export default function ProductDetailPage() {
@@ -27,28 +28,42 @@ export default function ProductDetailPage() {
 
   const getToken = () => localStorage.getItem('adminToken');
 
-   const extractImageUrls = (imageData: (string | { url: string })[]): string[] => {
-  if (!Array.isArray(imageData)) return [];
+  const mapToAbsoluteUrls = (
+  images: ImageUrl[],
+  baseUrl: string
+): string[] =>
+  images
+    .map(img =>
+      img.url.startsWith('http')
+        ? img.url
+        : `${baseUrl}${img.url}`
+    )
+    .filter(Boolean);
 
-  return imageData
-    .map(img => {
-      const url =
-        typeof img === 'string'
-          ? img
-          : img && typeof img === 'object'
-          ? img.url
-          : null;
 
-      if (!url) return null;
+//    const extractImageUrls = (imageData: (string | { url: string })[]): string[] => {
+//   if (!Array.isArray(imageData)) return [];
+
+//   return imageData
+//     .map(img => {
+//       const url =
+//         typeof img === 'string'
+//           ? img
+//           : img && typeof img === 'object'
+//           ? img.url
+//           : null;
+
+//       if (!url) return null;
 
      
-      if (url.startsWith('http')) return url;
+//       if (url.startsWith('http')) return url;
 
      
-      return `${imageBaseUrl}${url}`;
-    })
-    .filter((url): url is string => Boolean(url));
-};
+//       return `${imageBaseUrl}${url}`;
+//     })
+//     .filter((url): url is string => Boolean(url));
+// };
+
 
  useEffect(() => {
     const fetchProduct = async () => {
@@ -64,8 +79,9 @@ export default function ProductDetailPage() {
         }
 
         const data = await response.json();
+        const imageUrls: ImageUrl[] = parseImageUrl(data.image_url);
+const productImages: string[] = mapToAbsoluteUrls(imageUrls, imageBaseUrl);
 
-            const productImages = extractImageUrls(data.image_url);
 
         
        
@@ -80,18 +96,23 @@ export default function ProductDetailPage() {
           unit: data.unit,
           hasVariation: data.hasVariation || false,
           images: productImages,
-          variants: (data.variants || []).map((variant: ProductVariantDetails) => ({
-            id: variant.id,
-            name: variant.name || `Variant ${variant.sku}`,
-            sku: variant.sku,
-            attributes: variant.attributes || {},
-            costPrice: parseFloat(variant.cost_price) || 0,
-            sellingPrice: parseFloat(variant.selling_price) || 0,
-            quantity: variant.quantity || 0,
-            threshold: variant.threshold || 0,
-            barcode: variant.barcode || '',
-           images: extractImageUrls(variant.image_url)
-          })),
+        variants: (data.variants || []).map((variant: ProductVariantDetails) => {
+  const variantImageUrls = parseImageUrl(variant.image_url);
+  const variantImages = mapToAbsoluteUrls(variantImageUrls, imageBaseUrl); 
+
+  return {
+    id: variant.id,
+    name: variant.name || `Variant ${variant.sku}`,
+    sku: variant.sku,
+    attributes: variant.attributes || {},
+    costPrice: parseFloat(variant.cost_price) || 0,
+    sellingPrice: parseFloat(variant.selling_price) || 0,
+    quantity: variant.quantity || 0,
+    threshold: variant.threshold || 0,
+    barcode: variant.barcode || '',
+    images: variantImages, 
+  };
+}),
          
           inventoryValue: data.stock?.inventory_value || 0,
           inventoryCost: data.stock?.inventory_cost || 0,
