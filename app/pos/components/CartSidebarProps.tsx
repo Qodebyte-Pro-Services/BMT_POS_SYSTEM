@@ -120,12 +120,20 @@ const finalTotal = Math.max(0, total - totalDiscount);
     onCheckout();
   };
 
-const getImageUrl = (imagePath?: string): string => {
+  const getImageUrl = (imagePath?: string): string => {
   if (!imagePath) return '';
-  const apiUrl =
+
+
+  if (imagePath.startsWith('http')) return imagePath;
+
+  const baseUrl =
     process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://api.bmtpossystem.com';
-  return `${apiUrl}${imagePath}`;
+
+  return imagePath.startsWith('/')
+    ? `${baseUrl}${imagePath}`
+    : `${baseUrl}/${imagePath}`;
 };
+
 
 
  const getTaxableAmount = (item: CartItem): number => {
