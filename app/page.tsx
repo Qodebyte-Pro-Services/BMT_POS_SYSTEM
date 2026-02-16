@@ -120,7 +120,7 @@ export default function Home() {
             </div>
             <div className="text-gray-600 text-xs">
               <p>
-                © {new Date().getFullYear()} Big Men Transaction Apparel
+                © {new Date().getFullYear()} QodeByte Pro Services.
                 <span className="block sm:inline sm:ml-1">All Rights Reserved</span>
               </p>
             </div>

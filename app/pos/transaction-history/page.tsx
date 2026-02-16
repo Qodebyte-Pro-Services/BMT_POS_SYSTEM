@@ -812,6 +812,18 @@ const handlePrintReceipt = (transaction: Transaction) => {
             )}
           </CardContent>
         </Card>
+        <div className="mt-6 text-center text-sm text-gray-500">
+    <span>
+      © {new Date().getFullYear()} Qodebyte Digital Solutions. All rights reserved.
+    </span>
+
+    <span className="flex items-center gap-1">
+      Powered by
+      <span className="font-medium text-gray-700">
+        Qodebyte Digital Solutions
+      </span>
+    </span>
+       </div>
       </div>
   );
 }

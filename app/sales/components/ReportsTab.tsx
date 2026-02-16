@@ -856,7 +856,7 @@ const viewReport = (report: GeneratedReport): void => {
                 <div>0800-BIG-MEN</div>
               </div>
               <div>Report ID: ${report.id} | Period: ${report.startDate} to ${report.endDate} | Type: ${report.type}</div>
-              <div class="text-xs mt-2">© ${new Date().getFullYear()} Big Men Transaction Apparel. All rights reserved.</div>
+              <div class="text-xs mt-2">© ${new Date().getFullYear()} Powered By Qodebyte Pro Services. All rights reserved.</div>
             </div>
           </div>
         </div>
