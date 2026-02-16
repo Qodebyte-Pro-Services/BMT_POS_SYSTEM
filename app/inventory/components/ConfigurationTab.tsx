@@ -304,7 +304,7 @@ export function ConfigureTab() {
     setLoadingDiscounts(true);
     try {
       const token = getToken();
-      const response = await fetch(`${apiUrl}/discounts`, {
+      const response = await fetch(`${apiUrl}/sales/discounts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to fetch discounts');
@@ -340,7 +340,7 @@ export function ConfigureTab() {
   const fetchDiscountLinks = async () => {
     try {
       const token = getToken();
-      const response = await fetch(`${apiUrl}/discounts/links/all`, {
+      const response = await fetch(`${apiUrl}/sales/discounts/links/all`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to fetch links');
