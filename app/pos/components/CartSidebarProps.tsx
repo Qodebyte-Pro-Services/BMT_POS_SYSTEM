@@ -288,7 +288,7 @@ const finalTotal = Math.max(0, total - totalDiscount);
                         <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100">
                           {item.image && imageUrl ? (
                             <Image
-                              src={imageUrl}
+                              src={item.image}
                               width={100}
                                 height={100}
                               alt={item.productName}

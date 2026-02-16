@@ -157,7 +157,16 @@ export default function POSPage() {
           price: parseFloat(String(variant.selling_price)),
           quantity: 1,
           taxable: variant.taxable,
-          image: getVariantImage(variant.image_url),
+       image: (() => {
+  const img = getVariantImage(variant.image_url);
+  if (!img) return undefined;
+  if (img.startsWith('http')) return img;
+
+  const base =
+    process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://api.bmtpossystem.com';
+
+  return img.startsWith('/') ? `${base}${img}` : `${base}/${img}`;
+})(),
           stock: variant.quantity,
         productDiscount: discount ? {
             id: discount.id,
