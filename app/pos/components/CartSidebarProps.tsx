@@ -506,7 +506,9 @@ const finalTotal = Math.max(0, total - totalDiscount);
    <Separator />
           
           <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
+             <span>Total {discountMode === 'manual' && (
+              <span className='text-muted text-sm'>(before removing discount)</span>
+             )}</span>
             <span>NGN {finalTotal.toFixed(2)}</span>
           </div>
         </div>
