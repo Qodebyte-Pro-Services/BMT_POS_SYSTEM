@@ -57,7 +57,9 @@ export function StockAlertWidget() {
         }
 
         const data = await response.json();
-        setItems(data.alerts || []);
+         setItems((data.alerts || []).filter(
+  (item: StockAlertItem) => item.status !== 'normal'
+));
       } catch (error) {
         console.error("Stock alert fetch error:", error);
         toast.error("Failed to load stock alerts");
