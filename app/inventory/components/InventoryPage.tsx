@@ -58,7 +58,10 @@ export  function InventoryPage() {
       </div>
 
 
-      <div className="flex justify-end mt-2">
+      <div className="xl:flex grid grid-cols-1 gap-4 justify-end mt-2">
+        <label htmlFor="search" className="sr-only">
+          Search
+        </label>
         <input
           type="text"
           placeholder="Search product by name..."
