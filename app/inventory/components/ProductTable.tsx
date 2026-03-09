@@ -57,12 +57,19 @@ export function ProductTable({ searchQuery }: { searchQuery: string }) {
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [openRowId, setOpenRowId] = useState<number | null>(null);
    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const limit = 10;
 
+    useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -78,8 +85,8 @@ export function ProductTable({ searchQuery }: { searchQuery: string }) {
         const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.bmtpossystem.com/api';
         let url = `${apiUrl}/products?page=${currentPage}&limit=${limit}`;
         
-        if (searchQuery.trim()) {
-          url += `&search=${encodeURIComponent(searchQuery)}`;
+        if (debouncedQuery.trim()) {
+          url += `&search=${encodeURIComponent(debouncedQuery)}`;
         }
 
         const response = await fetch(url, {
@@ -112,7 +119,7 @@ export function ProductTable({ searchQuery }: { searchQuery: string }) {
     };
 
     fetchProducts();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, debouncedQuery]);
 
  
   const formatCurrency = (value: number) => {
