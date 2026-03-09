@@ -224,7 +224,7 @@ export function ProductFilters({
           <Popover open={brandOpen} onOpenChange={setBrandOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
+                variant="default"
                 role="combobox"
                 aria-expanded={brandOpen}
                 className='border border-gray-900 w-full justify-between'
@@ -286,7 +286,7 @@ export function ProductFilters({
           <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
+                variant="default"
                 role="combobox"
                 aria-expanded={categoryOpen}
                 className='border border-gray-900 w-full justify-between'
@@ -348,7 +348,7 @@ export function ProductFilters({
           <Popover open={productOpen} onOpenChange={setProductOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
+                variant="default"
                 role="combobox"
                 aria-expanded={productOpen}
                 className='border border-gray-900 w-full justify-between'

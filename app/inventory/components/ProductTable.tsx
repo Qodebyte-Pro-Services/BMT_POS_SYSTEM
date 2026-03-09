@@ -159,7 +159,11 @@ export function ProductTable({ searchQuery }: { searchQuery: string }) {
     const matchesCategory =
       activeCategory === "All" || product.category?.name === activeCategory;
 
-    return matchesCategory;
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesCategory && matchesSearch;
   });
 
   const handleDelete = (productId: number, productName: string) => {
