@@ -3,9 +3,23 @@
 import { useEffect, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Search, Check, ChevronsUpDown } from "lucide-react";
 import { useVariants, VariantWithProduct } from './useVariants';
+import { cn } from '@/lib/utils';
 
 
 interface Category {
@@ -50,6 +64,9 @@ export function ProductFilters({
   const [fetchedProducts, setFetchedProducts] = useState<Product[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(true);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [brandOpen, setBrandOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
 
 
   const { variants, loading: variantsLoading } = useVariants();
@@ -157,14 +174,16 @@ export function ProductFilters({
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filteredVariants = filteredVariants.filter(
-        v =>
+      filteredVariants = filteredVariants.filter(v => {
+        const categoryName = typeof v.category === 'string' ? v.category : '';
+        return (
           v.sku.toLowerCase().includes(query) ||
           v.barcode.toLowerCase().includes(query) ||
           v.product_name.toLowerCase().includes(query) ||
           v.brand.toLowerCase().includes(query) ||
-          v.category.toLowerCase().includes(query)
-      );
+          categoryName.toLowerCase().includes(query)
+        );
+      });
     }
 
     // Call parent callback with filtered variants
@@ -202,51 +221,188 @@ export function ProductFilters({
 
         <div>
           <Label className="text-sm">Brand</Label>
-          <Select value={selectedBrand} onValueChange={onBrandChange} disabled={isLoading}>
-            <SelectTrigger className='border border-gray-900'>
-              <SelectValue placeholder={isLoading ? "Loading..." : "All Brands"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-48 overflow-y-auto">
-              <SelectItem value="all">All Brands</SelectItem>
-              {displayBrands.map(brand => (
-                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={brandOpen} onOpenChange={setBrandOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={brandOpen}
+                className='border border-gray-900 w-full justify-between'
+              >
+                {selectedBrand && selectedBrand !== 'all'
+                  ? displayBrands.find(b => b === selectedBrand)
+                  : 'All Brands'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Search brands..." />
+                <CommandEmpty>No brand found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      value="all"
+                      onSelect={() => {
+                        onBrandChange('all');
+                        setBrandOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedBrand === 'all' ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      All Brands
+                    </CommandItem>
+                    {displayBrands.map(brand => (
+                      <CommandItem
+                        key={brand}
+                        value={brand}
+                        onSelect={() => {
+                          onBrandChange(brand);
+                          setBrandOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            selectedBrand === brand ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        {brand}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
-         <div>
+        <div>
           <Label className="text-sm">Category</Label>
-          <Select value={selectedCategory} onValueChange={onCategoryChange} disabled={isLoading}>
-            <SelectTrigger className='border border-gray-900'>
-              <SelectValue placeholder={isLoading ? "Loading..." : "All Categories"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-48 overflow-y-auto">
-              <SelectItem value="all">All Categories</SelectItem>
-              {displayCategories.map(category => (
-                <SelectItem key={category.id} value={category.name}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={categoryOpen}
+                className='border border-gray-900 w-full justify-between'
+              >
+                {selectedCategory && selectedCategory !== 'all'
+                  ? displayCategories.find(c => c.name === selectedCategory)?.name
+                  : 'All Categories'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Search categories..." />
+                <CommandEmpty>No category found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      value="all"
+                      onSelect={() => {
+                        onCategoryChange('all');
+                        setCategoryOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedCategory === 'all' ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      All Categories
+                    </CommandItem>
+                    {displayCategories.map(category => (
+                      <CommandItem
+                        key={category.id}
+                        value={category.name}
+                        onSelect={() => {
+                          onCategoryChange(category.name);
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            selectedCategory === category.name ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        {category.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
           <Label className="text-sm">Product</Label>
-          <Select value={selectedProduct} onValueChange={onProductChange} disabled={isLoading}>
-            <SelectTrigger className='border border-gray-900'>
-              <SelectValue placeholder={isLoading ? "Loading..." : "All Products"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-48 overflow-y-auto">
-              <SelectItem value="all">All Products</SelectItem>
-              {productsToDisplay.map((product) => (
-                <SelectItem key={product.id} value={String(product.id)}>
-                  {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={productOpen} onOpenChange={setProductOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={productOpen}
+                className='border border-gray-900 w-full justify-between'
+              >
+                {selectedProduct && selectedProduct !== 'all'
+                  ? productsToDisplay.find(p => String(p.id) === selectedProduct)?.name
+                  : 'All Products'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Search products..." />
+                <CommandEmpty>No product found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      value="all"
+                      onSelect={() => {
+                        onProductChange('all');
+                        setProductOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedProduct === 'all' ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      All Products
+                    </CommandItem>
+                    {productsToDisplay.map(product => (
+                      <CommandItem
+                        key={product.id}
+                        value={String(product.id)}
+                        onSelect={() => {
+                          onProductChange(String(product.id));
+                          setProductOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            selectedProduct === String(product.id) ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        {product.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
