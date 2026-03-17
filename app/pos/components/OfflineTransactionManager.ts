@@ -1,4 +1,4 @@
-// Utility for managing offline transactions and syncing with backend
+﻿// Utility for managing offline transactions and syncing with backend
 
 import { Transaction } from '@/app/utils/type';
 
@@ -12,12 +12,19 @@ export interface OfflineTransaction {
   status?: 'pending' | 'failed' | 'synced'; 
 }
 
-const OFFLINE_TRANSACTIONS_KEY = 'pos_offline_transactions';
-const TRANSACTION_SYNC_INTERVAL = 30000; 
+const OFFLINE_TRANSACTIONS_KEY = 'pos_offline_transactions'; 
 
 export class OfflineTransactionManager {
   static addTransaction(transactionData: Transaction): string {
     const transactions = this.getTransactions();
+    
+  
+    const existingTransaction = transactions.find(t => t.transactionData.id === transactionData.id);
+    if (existingTransaction) {
+      console.warn(`⚠️ Transaction ${transactionData.id} is already being tracked for offline sync`);
+      return existingTransaction.id;
+    }
+    
     const id = `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const offlineTransaction: OfflineTransaction = {
@@ -34,6 +41,62 @@ export class OfflineTransactionManager {
 
     return id;
   }
+
+ 
+  static cleanupOldRetries(): { removed: number; stats: string } {
+    const transactions = this.getTransactions();
+ 
+    const beforeCleanup = transactions.length;
+    const nonFailedTransactions = transactions.filter(t => t.status !== 'failed');
+  
+    const seen = new Set<string>();
+    const deduplicatedTransactions = nonFailedTransactions.filter(t => {
+      const txId = t.transactionData.id;
+      if (seen.has(txId)) {
+        return false; 
+      }
+      seen.add(txId);
+      return true;
+    });
+    localStorage.setItem(OFFLINE_TRANSACTIONS_KEY, JSON.stringify(deduplicatedTransactions));
+    const removed = beforeCleanup - deduplicatedTransactions.length;
+    const stats = `Cleaned up ${removed} old failed/duplicate transactions. ${deduplicatedTransactions.length} valid transactions remaining.`;
+    console.log(stats);
+    return { removed, stats };
+  }
+
+  static cleanupLocalTransactions(): { removed: number; stats: string } {
+    try {
+      const transactions = JSON.parse(
+        localStorage.getItem('pos_transactions') || '[]'
+      ) as Array<Record<string, unknown>>;
+      if (transactions.length === 0) {
+        return { removed: 0, stats: 'No transactions to clean up.' };
+      }
+    
+      const latestByTxId = new Map<string, Record<string, unknown> & { id: string }>();
+      transactions.forEach((tx: Record<string, unknown> & { id?: string }) => {
+        if (!tx.id) return;
+        const txId = tx.id as string;
+        const existing = latestByTxId.get(txId);
+      
+        if (!existing || (tx.synced && !existing.synced)) {
+          latestByTxId.set(txId, tx as Record<string, unknown> & { id: string });
+        }
+      });
+      const deduplicatedTransactions = Array.from(latestByTxId.values());
+      const removed = transactions.length - deduplicatedTransactions.length;
+      localStorage.setItem('pos_transactions', JSON.stringify(deduplicatedTransactions));
+      const stats = `Cleaned up ${removed} duplicate transactions from local storage. ${deduplicatedTransactions.length} valid transactions remaining.`;
+      console.log(stats);
+      return { removed, stats };
+    } catch (error) {
+      console.error('Error cleaning up local transactions:', error);
+      return { removed: 0, stats: 'Error during cleanup - no changes made.' };
+    }
+  }
+
+
 
   static getTransactions(): OfflineTransaction[] {
     try {

@@ -25,8 +25,13 @@ import { useWalkInCustomer } from './components/useWalkInCustomer';
 import { useCustomers } from './components/useCustomers';
 import { parse } from 'path';
 import { parseImageUrl } from '../utils/imageHelper';
+import { OfflineTransactionManager } from './components/OfflineTransactionManager';
 
 export default function POSPage() {
+  useEffect(() => {
+    OfflineTransactionManager.cleanupOldRetries();
+    OfflineTransactionManager.cleanupLocalTransactions();
+  }, []);
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProduct, setSelectedProduct] = useState<string>("all");

@@ -4,7 +4,6 @@ import { useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { OfflineTransactionManager } from './OfflineTransactionManager';
 import { useSales, type CreateSalePayload, type SaleResponse } from './useSales';
-import { Transaction } from '@/app/utils/type';
 
 export interface UseOfflineSyncReturn {
   syncPendingTransactions: () => Promise<void>;
@@ -95,7 +94,24 @@ export function useOfflineSync(onWalkInSynced?: () => Promise<void>): UseOffline
 
         const _result: SaleResponse = await createSale(salePayload);
 
+     
         OfflineTransactionManager.markAsSynced(transaction.id);
+        
+     
+        const allTransactions = JSON.parse(
+          localStorage.getItem('pos_transactions') || '[]'
+        ) as Array<Record<string, unknown>>;
+        const txIndex = allTransactions.findIndex((t) => t.id === transactionData.id);
+        if (txIndex >= 0) {
+          allTransactions[txIndex] = {
+            ...allTransactions[txIndex],
+            synced: true,
+            status: 'completed',
+            backendId: _result.id,
+          };
+          localStorage.setItem('pos_transactions', JSON.stringify(allTransactions));
+        }
+        
         successCount++;
 
         console.log(`✅ Synced transaction ${transaction.id}`);
@@ -103,15 +119,23 @@ export function useOfflineSync(onWalkInSynced?: () => Promise<void>): UseOffline
   failureCount++;
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
  
-  if (errorMessage.includes('validation') || errorMessage.includes('required') || errorMessage.includes('Failed to create sale')) {
+ 
+  const isPermanentError = errorMessage.includes('validation') || 
+                           errorMessage.includes('required') || 
+                           errorMessage.includes('invalid') ||
+                           errorMessage.includes('not found');
+  
+  if (isPermanentError) {
+  
     OfflineTransactionManager.markAsFailed(transaction.id, errorMessage);
-    OfflineTransactionManager.clearFailedTransactions();
   } else {
+  
     OfflineTransactionManager.markSyncAttempt(transaction.id, errorMessage);
-    OfflineTransactionManager.removeTransactionsWithoutStatus();
   }
+  
         console.warn(
-          `⚠️ Failed to sync transaction ${transaction.id}: ${errorMessage}`
+          `⚠️ Failed to sync transaction ${transaction.id}: ${errorMessage}`,
+          `${isPermanentError ? '(Permanent error - marked as failed)' : '(Temporary error - will retry later)'}`
         );
       }
     }
@@ -128,7 +152,7 @@ export function useOfflineSync(onWalkInSynced?: () => Promise<void>): UseOffline
       });
     }
 
-    // Refetch walk-in customer if any walk-in transactions were synced
+   
     if (hasWalkInCustomer && successCount > 0 && onWalkInSynced) {
       try {
         await onWalkInSynced();
