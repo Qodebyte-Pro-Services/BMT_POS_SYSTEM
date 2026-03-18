@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; 
 const WARNING_TIME = 25 * 60 * 1000; 
 
-export function useInactivityTimeout(onWarning?: () => void) {
+export function useInactivityTimeout(onWarning?: () => void, excludedPaths: string[] = []) {
   const router = useRouter();
+  const pathname = usePathname();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(0);
+
+  const isPathExcluded = excludedPaths.some((path) => pathname.startsWith(path));
 
   const handleLogout = () => {
    
@@ -23,7 +26,7 @@ export function useInactivityTimeout(onWarning?: () => void) {
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
-    if (!token) {
+    if (!token || isPathExcluded) {
       return;
     }
 
@@ -87,7 +90,7 @@ export function useInactivityTimeout(onWarning?: () => void) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [router]);
+  }, [router, isPathExcluded]);
 
   return {
     handleLogout,

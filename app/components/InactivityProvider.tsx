@@ -20,12 +20,15 @@ export function InactivityProvider({ children }: InactivityProviderProps) {
   const [showWarning, setShowWarning] = useState(false);
   const [remainingTime, setRemainingTime] = useState(5 * 60);
 
+
+  const excludedPaths = ['/pos'];
+
   const handleWarning = useCallback(() => {
     setShowWarning(true);
     setRemainingTime(5 * 60);
   }, []);
 
-  const { handleLogout } = useInactivityTimeout(handleWarning);
+  const { handleLogout } = useInactivityTimeout(handleWarning, excludedPaths);
 
   const handleContinueSession = () => {
     setShowWarning(false);
