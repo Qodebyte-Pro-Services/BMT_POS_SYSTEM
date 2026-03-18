@@ -90,6 +90,8 @@ export function useOfflineSync(onWalkInSynced?: () => Promise<void>): UseOffline
           discount: Math.round((transactionData.totalDiscount || 0) * 100) / 100,
           taxes: Math.round(transactionData.tax * 100) / 100,
           note: `Synced offline transaction ${transactionData.id}`,
+          timestamp: transactionData.timestamp,
+          createdOffline: transactionData.createdOffline || true,
         };
 
         const _result: SaleResponse = await createSale(salePayload);
@@ -119,11 +121,31 @@ export function useOfflineSync(onWalkInSynced?: () => Promise<void>): UseOffline
   failureCount++;
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
  
- 
+   const isInventoryError = errorMessage.includes('stock') || errorMessage.includes('Insufficient');
+  const isDuplicateError = errorMessage.includes('already exists') || errorMessage.includes('duplicate');
+  const isValidationError = errorMessage.includes('validation') || 
+                           errorMessage.includes('required') || 
+                           errorMessage.includes('invalid') ||
+                           errorMessage.includes('mismatch') ||
+                           errorMessage.includes('not found');
   const isPermanentError = errorMessage.includes('validation') || 
                            errorMessage.includes('required') || 
                            errorMessage.includes('invalid') ||
                            errorMessage.includes('not found');
+  if (isDuplicateError) {
+      console.log(`✅ Sale ${transaction.id} already synced (duplicate prevented)`);
+    OfflineTransactionManager.markAsSynced(transaction.id);
+    successCount++;
+  } else if (isInventoryError) {
+    console.warn(`📦 Inventory conflict for ${transaction.id}. Will retry when stock available.`);
+    OfflineTransactionManager.markSyncAttempt(transaction.id, errorMessage);
+  } else if (isValidationError) {
+    console.error(`❌ Validation error in ${transaction.id}: ${errorMessage}`);
+    OfflineTransactionManager.markAsFailed(transaction.id, errorMessage);
+  } else {
+    console.warn(`⚠️ Temporary error syncing ${transaction.id}: ${errorMessage}`);
+    OfflineTransactionManager.markSyncAttempt(transaction.id, errorMessage);
+  }
   
   if (isPermanentError) {
   

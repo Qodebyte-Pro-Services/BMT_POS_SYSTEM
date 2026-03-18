@@ -332,6 +332,7 @@ export interface Transaction {
   amountPaid: number;
   change: number;
   timestamp: string;
+  createdOffline: boolean;
   synced: boolean;
   status?: 'pending' | 'completed' | 'failed';
   purchaseType?: 'in-store' | 'online';

@@ -318,6 +318,8 @@ const handleCompleteSale = async () => {
   change: paymentMethod === 'credit' ? 0 : calculateChange(),
 
   timestamp,
+  createdOffline: true,
+  syncedAt: null,  
   synced: false,
   purchaseType,
 

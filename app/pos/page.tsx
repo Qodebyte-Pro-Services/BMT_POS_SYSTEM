@@ -58,6 +58,7 @@ export default function POSPage() {
   const [filteredVariants, setFilteredVariants] = useState<VariantWithProduct[]>([]);
   const [allVariants, setAllVariants] = useState<VariantWithProduct[]>([]);
   const [adminData, setAdminData] = useState<AdminDetail | null>(null);
+   const [pendingSyncCount, setPendingSyncCount] = useState(0);
       const navigation = [
         { name: "Dashboard", href: "/dashboard", icon: Home, permissions: ["view_inventory","view_expenses","view_customer","view_staff","view_settings","view_login_attempts"] },
         { name: "Inventory", href: "/inventory", icon: Package, permissions: ["view_inventory"] },
@@ -130,10 +131,34 @@ const calculateManualDiscount = () => {
     setIsHydrated(true);
   }, []);
 
-  // Sync all variants from hook
+ 
   useEffect(() => {
     setAllVariants(variantsFromHook);
   }, [variantsFromHook]);
+
+    useEffect(() => {
+
+    const checkPendingTransactions = () => {
+      const unsyncedTxns = OfflineTransactionManager.getUnsyncedTransactions();
+      setPendingSyncCount(unsyncedTxns.length);
+    };
+
+  
+    checkPendingTransactions();
+
+   
+    const interval = setInterval(checkPendingTransactions, 5000);
+
+   
+    window.addEventListener('online', checkPendingTransactions);
+    window.addEventListener('offline', checkPendingTransactions);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', checkPendingTransactions);
+      window.removeEventListener('offline', checkPendingTransactions);
+    };
+  }, []);
 
   const handleTaxRateChange = (newRate: number) => {
     setTaxRate(newRate);
@@ -409,6 +434,11 @@ const finalTotal = Math.max(0, calculateTotal() - totalDiscount);
               <Clock className="h-4 w-4" />
               Session: {formatTime(sessionTime)}
             </div>
+              {pendingSyncCount > 0 && (
+              <Badge variant="outline" className="bg-amber-50 border-amber-300 text-amber-800">
+                ⏳ {pendingSyncCount} pending sync{pendingSyncCount !== 1 ? 's' : ''}
+              </Badge>
+            )}
             <div className="flex items-center gap-2 ml-auto">
               <Badge className="bg-gray-900 text-green-400 px-2 py-1 rounded-md flex items-center gap-1">
                 <User className="h-4 w-4" />
@@ -429,7 +459,7 @@ const finalTotal = Math.max(0, calculateTotal() - totalDiscount);
             </div>
              <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors mt-2"
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-gray-800 hover:text-red-400 rounded-lg transition-colors mt-2"
           >
             <LogOut className="h-5 w-5" />
             Sign Out

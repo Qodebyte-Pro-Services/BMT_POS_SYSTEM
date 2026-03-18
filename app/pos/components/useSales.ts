@@ -37,6 +37,8 @@ export interface CreateSalePayload {
   discount?: number;
   taxes?: number;
   note?: string;
+    timestamp?: string;
+  createdOffline?: boolean;
 }
 
 export interface SaleResponse {
