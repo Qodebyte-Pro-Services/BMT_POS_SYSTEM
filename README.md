@@ -14,6 +14,13 @@ pnpm dev
 bun dev
 ```
 
+267 1qty
+157 2qty,
+71  1qty,
+5 1qty,
+
+
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
