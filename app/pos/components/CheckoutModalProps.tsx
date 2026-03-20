@@ -1348,6 +1348,7 @@ useEffect(() => {
               ]);
               onOpenChange(false);
             }}
+            disabled={isSyncing || createSaleLoading}
           >
             Cancel Order
           </Button>
