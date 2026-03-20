@@ -398,9 +398,9 @@ const confirmDelete = async () => {
     setDeleting(true);
     const response = await fetch(`${ApiUrl}/sales/${selectedSaleForDelete.id}`, {
       method: "DELETE",
-      headers: {
+     headers: {
+         Authorization: `Bearer ${adminToken}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${adminToken}`,
       },
     });
 
