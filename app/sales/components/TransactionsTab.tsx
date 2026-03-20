@@ -51,6 +51,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CartItem, ReceiptTransaction, Sale } from "@/app/utils/type";
 import ReactDOMServer from "react-dom/server";
 import { Receipt } from "@/app/pos/components/Receipt";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type DateRange = {
   filter: string;
@@ -166,6 +176,9 @@ export function TransactionsTab({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedSaleForDelete, setSelectedSaleForDelete] = useState<Sale | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
  
   useEffect(() => {
@@ -360,6 +373,48 @@ const handlePrintReceipt = (receipt: ReceiptTransaction) => {
   printWindow.focus();
 };
 
+const ApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.bmtpossystem.com/api";
+
+const handleDeleteClick = (sale: Sale) => {
+  setSelectedSaleForDelete(sale);
+  setDeleteDialogOpen(true);
+};
+
+const confirmDelete = async () => {
+  if (!selectedSaleForDelete) return;
+
+  try {
+    setDeleting(true);
+    const response = await fetch(`${ApiUrl}/sales/${selectedSaleForDelete.id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete sale");
+    }
+
+    const data = await response.json();
+    console.log("Delete response:", data);
+    toast.success(`Sale ${selectedSaleForDelete.id} deleted successfully`);
+    
+   
+    setSales(sales.filter(s => s.id !== selectedSaleForDelete.id));
+    
+  
+    setDeleteDialogOpen(false);
+    setSelectedSaleForDelete(null);
+  } catch (err) {
+    console.error("Delete error:", err);
+    toast.error(err instanceof Error ? err.message : "Failed to delete sale");
+  } finally {
+    setDeleting(false);
+  }
+};
+
 
   const paymentBadge = (method: string) => (
     <Badge className="bg-gray-100 text-gray-800">{method}</Badge>
@@ -378,6 +433,7 @@ const handlePrintReceipt = (receipt: ReceiptTransaction) => {
 
  
   return (
+    <>
     <Card className="bg-gray-900 text-white">
       <CardHeader>
         <CardTitle>Transaction History</CardTitle>
@@ -490,7 +546,10 @@ onClick={() => {
                       <Printer className="h-4 w-4 mr-2" />
                       View Receipt
                     </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => handleDeleteClick(sale)}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -547,5 +606,40 @@ onClick={() => {
         )}
       </CardContent>
     </Card>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Sale</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete this sale? This will:
+            <ul className="mt-2 ml-4 space-y-1 list-disc">
+              <li>Remove the transaction record</li>
+              <li>Refund all items back to inventory</li>
+              <li>Reverse all payments and credits</li>
+            </ul>
+            <p className="mt-3 font-semibold text-white">
+              Sale ID: {selectedSaleForDelete?.id}
+            </p>
+            <p className="mt-1 text-sm">
+              Amount: NGN {Number(selectedSaleForDelete?.total_amount).toFixed(2)}
+            </p>
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex gap-3 justify-end">
+          <AlertDialogCancel disabled={deleting}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirmDelete}
+            disabled={deleting}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {deleting ? "Deleting..." : "Delete Sale"}
+          </AlertDialogAction>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
