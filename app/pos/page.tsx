@@ -441,7 +441,7 @@ const finalTotal = Math.max(0, calculateTotal() - totalDiscount);
     setIsScannerProcessing(true);
     
     try {
-      // Search in ALL variants, not just filtered ones
+    
       const trimmedBarcode = barcode.trim().toLowerCase();
       const variant = allVariants.find(v => v.barcode.trim().toLowerCase() === trimmedBarcode);
       
@@ -451,17 +451,34 @@ const finalTotal = Math.max(0, calculateTotal() - totalDiscount);
         return;
       }
 
-      if (variant.quantity <= 0) {
-        toast.error(`Out of stock: ${variant.product_name}`);
+      // 📦 Check inventory constraints (handles stock validation + offline checks)
+      const existingCartItem = cart.find(item => item.variantId === variant.variant_id);
+      const newQuantity = existingCartItem ? existingCartItem.quantity + 1 : 1;
+
+      if (newQuantity > variant.quantity) {
+        toast.error(
+          `Insufficient stock: ${variant.product_name}\n` +
+          `Available: ${variant.quantity} | Requested: ${newQuantity}`,
+          { description: `Already have ${existingCartItem?.quantity || 0} in cart` }
+        );
         setIsScannerProcessing(false);
         return;
       }
 
-      const existingCartItem = cart.find(item => item.variantId === variant.variant_id);
+      // 📦 Check offline inventory snapshot (prevents overselling while offline)
+      if (!navigator.onLine) {
+        const offlineCheck = OfflineInventoryManager.canAddToCart(variant.variant_id, 1);
+        if (!offlineCheck.canAdd) {
+          toast.error(offlineCheck.reason || 'Cannot add item: offline inventory limit reached');
+          setIsScannerProcessing(false);
+          return;
+        }
+      }
 
+      // ✅ All validations passed - add/update item
       if (existingCartItem) {
-        handleUpdateQuantity(existingCartItem.id, existingCartItem.quantity + 1);
-        toast.success(`Updated: ${variant.product_name} (Qty: ${existingCartItem.quantity + 1})`);
+        handleUpdateQuantity(existingCartItem.id, newQuantity);
+        toast.success(`Updated: ${variant.product_name} (Qty: ${newQuantity})`);
       } else {
         handleAddToCart(variant);
       }
