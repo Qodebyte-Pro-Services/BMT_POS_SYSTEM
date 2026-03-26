@@ -91,9 +91,17 @@ function mapSaleToReceipt(sale: Sale): ReceiptTransaction {
     id: item.id,
     productId: Number(item.product_id),
     variantId: Number(item.variant_id),
-    productName: item.product_name || item.Variant?.Product?.name || "Unknown", 
-    variantName: item.variant_name || item.Variant?.sku || "Unknown",
-    sku: item.sku || item.Variant?.sku || "",
+    productName: 
+      item.product_name || 
+      item.variant?.product?.name || 
+      item.Variant?.Product?.name || 
+      "Unknown", 
+    variantName: 
+      item.variant_name || 
+      item.variant?.sku || 
+      item.Variant?.sku || 
+      "Unknown",
+    sku: item.sku || item.variant?.sku || item.Variant?.sku || "",
     price: Number(item.unit_price || item.price || 0),
     quantity: item.quantity,
   })) ?? [];

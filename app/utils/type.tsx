@@ -158,7 +158,7 @@ export type EditProductFormData = {
   taxable: boolean;
   unit: string;
   hasVariations: boolean;
-};
+};     
 
 export interface OrderItemAPI {
   id: string;
@@ -171,6 +171,12 @@ export interface OrderItemAPI {
   variant_name?: string;
   sku?: string;
   price?: number | string;
+  variant?: {
+    sku: string;
+    product?: {
+      name: string;
+    };
+  };
   Variant?: {
     sku: string;
     Product?: {
