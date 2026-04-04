@@ -249,9 +249,10 @@ const calculateManualDiscount = () => {
     
    
     if (!navigator.onLine) {
+      const currentQtyInCart = existingItem ? existingItem.quantity : 0;
       const offlineCheck = OfflineInventoryManager.canAddToCart(
         variant.variant_id, 
-        existingItem ? 1 : 1
+        currentQtyInCart + 1
       );
       
       if (!offlineCheck.canAdd) {
@@ -330,6 +331,15 @@ const calculateManualDiscount = () => {
       if (!variant) {
         toast.error('❌ Product not found in inventory');
         return;
+      }
+
+    
+      if (!navigator.onLine && cartItem) {
+        const offlineCheck = OfflineInventoryManager.canAddToCart(cartItem.variantId, newQuantity);
+        if (!offlineCheck.canAdd) {
+          toast.error(offlineCheck.reason || 'Cannot update quantity: offline inventory limit reached');
+          return;
+        }
       }
       
       if (newQuantity > variant.quantity) {
@@ -428,7 +438,24 @@ const finalTotal = Math.max(0, calculateTotal() - totalDiscount);
 
  const router = useRouter();
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    if (navigator.onLine) {
+      const unsyncedTxns = OfflineTransactionManager.getUnsyncedTransactions();
+      if (unsyncedTxns.length > 0) {
+        const confirmSync = window.confirm(`You have ${unsyncedTxns.length} unsynced transaction(s). Do you want to sync them before signing out?`);
+        
+        if (confirmSync) {
+          const syncToastId = toast.loading('Syncing transactions before sign out...');
+          try {
+            await syncPendingTransactions();
+            toast.success('Transactions synced successfully', { id: syncToastId });
+          } catch (error) {
+            toast.error('Failed to sync some transactions. Redirecting to login...', { id: syncToastId });
+          }
+        }
+      }
+    }
+    
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminDetail');
     router.push('/auth/login');
@@ -467,7 +494,7 @@ const finalTotal = Math.max(0, calculateTotal() - totalDiscount);
 
       // 📦 Check offline inventory snapshot (prevents overselling while offline)
       if (!navigator.onLine) {
-        const offlineCheck = OfflineInventoryManager.canAddToCart(variant.variant_id, 1);
+        const offlineCheck = OfflineInventoryManager.canAddToCart(variant.variant_id, newQuantity);
         if (!offlineCheck.canAdd) {
           toast.error(offlineCheck.reason || 'Cannot add item: offline inventory limit reached');
           setIsScannerProcessing(false);

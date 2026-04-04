@@ -189,7 +189,7 @@ const calculateInstallments = () => {
 
 const validateStockAvailability = (): { isValid: boolean; errorMessage?: string } => {
   for (const cartItem of cart) {
-    // Find the latest variant data from allVariants (source of truth)
+    // Find the latest variant data from allVariants (snapshot of last online state)
     const currentVariant = allVariants.find(v => v.variant_id === cartItem.variantId);
     
     if (!currentVariant) {
@@ -199,12 +199,24 @@ const validateStockAvailability = (): { isValid: boolean; errorMessage?: string 
       };
     }
     
-    // Check if requested quantity exceeds current available stock
-    if (cartItem.quantity > currentVariant.quantity) {
-      return {
-        isValid: false,
-        errorMessage: `⚠️ ${cartItem.productName}: Only ${currentVariant.quantity} items available, but you requested ${cartItem.quantity}. Please adjust your quantity.`,
-      };
+    // 📦 Check offline inventory snapshot (prevents overselling while offline)
+    if (!navigator.onLine) {
+      const { available, sold, original } = OfflineInventoryManager.checkAvailableStock(cartItem.variantId);
+      
+      if (cartItem.quantity > available) {
+        return {
+          isValid: false,
+          errorMessage: `⚠️ ${cartItem.productName}: Only ${available} unit(s) available offline (${sold}/${original} already sold in other pending sales). Please adjust your quantity.`,
+        };
+      }
+    } else {
+      // Online check using latest variant data
+      if (cartItem.quantity > currentVariant.quantity) {
+        return {
+          isValid: false,
+          errorMessage: `⚠️ ${cartItem.productName}: Only ${currentVariant.quantity} items available, but you requested ${cartItem.quantity}. Please adjust your quantity.`,
+        };
+      }
     }
   }
   

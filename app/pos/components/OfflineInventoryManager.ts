@@ -19,15 +19,21 @@ export class OfflineInventoryManager {
    */
   static saveInventorySnapshot(variants: VariantWithProduct[]): void {
     try {
-      const snapshot: OfflineInventorySnapshot[] = variants.map(v => ({
-        variantId: v.variant_id,
-        quantity: v.quantity, // This is the "available when last online" amount
-        sold: 0, // Reset sold counter when we update snapshot
-        lastUpdated: new Date().toISOString(),
-      }));
+      // Get current snapshot to preserve sold counts if they exist
+      const currentSnapshot = this.getSnapshot();
+      
+      const snapshot: OfflineInventorySnapshot[] = variants.map(v => {
+        const existing = currentSnapshot.find(s => s.variantId === v.variant_id);
+        return {
+          variantId: v.variant_id,
+          quantity: v.quantity, // This is the "available when last online" amount
+          sold: existing ? existing.sold : 0, // Preserve sold counter if it exists
+          lastUpdated: new Date().toISOString(),
+        };
+      });
 
       localStorage.setItem(OFFLINE_INVENTORY_KEY, JSON.stringify(snapshot));
-      console.log(`📦 Offline inventory snapshot saved: ${snapshot.length} variants`);
+      console.log(`📦 Offline inventory snapshot saved: ${snapshot.length} variants (preserved sold counts)`);
     } catch (error) {
       console.error('Error saving offline inventory snapshot:', error);
     }
