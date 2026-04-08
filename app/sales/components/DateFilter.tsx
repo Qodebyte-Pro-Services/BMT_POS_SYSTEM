@@ -22,7 +22,8 @@ export function DateFilter({ dateRange, onDateRangeChange }: DateFilterProps) {
   const filters = [
     { id: 'today', label: 'Today' },
     { id: 'yesterday', label: 'Yesterday' },
-    { id: 'thisWeek', label: 'This Week' },
+    { id: 'last7', label: 'This Week' },
+    //  { id: 'thisWeek', label: 'This Week' },
     { id: 'thisMonth', label: 'This Month' },
     { id: 'thisYear', label: 'This Year' },
     { id: 'custom', label: 'Custom' },
