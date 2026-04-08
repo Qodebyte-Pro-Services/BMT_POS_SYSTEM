@@ -37,6 +37,19 @@ interface VariantAdjustment {
   sku: string;
   currentQuantity: number;
   quantityChange: number;
+  currentCostPrice: number;
+  newCostPrice: number;
+  currentSellingPrice: number;
+  newSellingPrice: number;
+}
+
+interface AdjustmentPayloadItem {
+  variant_id: string;
+  new_quantity: number;
+  reason: 'increase' | 'decrease';
+  notes: string;
+  cost_price?: number;
+  selling_price?: number;
 }
 
 export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockModalProps) {
@@ -49,18 +62,20 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
   
   const availableVariants = product.hasVariation 
     ? product.variants 
-    : [{
-        id: 'product',
-        name: product.name,
-        sku: product.sku,
-        attributes: {},
-        costPrice: 150,
-        sellingPrice: 299.99,
-        quantity: product.totalStock,
-        threshold: 10,
-        barcode: '',
-        images: [],
-      }];
+    : (product.variants && product.variants.length > 0
+        ? [product.variants[0]]
+        : [{
+            id: 'product',
+            name: product.name,
+            sku: product.sku,
+            attributes: {},
+            costPrice: 0,
+            sellingPrice: 0,
+            quantity: product.totalStock,
+            threshold: 10,
+            barcode: '',
+            images: [],
+          }]);
 
  
   const availableForSelection = availableVariants.filter(
@@ -81,6 +96,10 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
         sku: variant.sku,
         currentQuantity: variant.quantity,
         quantityChange: 0,
+        currentCostPrice: variant.costPrice,
+        newCostPrice: variant.costPrice,
+        currentSellingPrice: variant.sellingPrice,
+        newSellingPrice: variant.sellingPrice,
       }
     ]);
 
@@ -117,6 +136,14 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
     });
   };
 
+  const handlePriceChange = (idx: number, field: 'newCostPrice' | 'newSellingPrice', value: number) => {
+    setAdjustments(prev => {
+      const copy = [...prev];
+      copy[idx][field] = value;
+      return copy;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -130,30 +157,27 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
       if (!token) throw new Error('No auth token');
 
       const payload = adjustments
-        .filter(adj => adj.quantityChange !== 0)
+        .filter(adj => 
+          adj.quantityChange !== 0 || 
+          adj.newCostPrice !== adj.currentCostPrice || 
+          adj.newSellingPrice !== adj.currentSellingPrice
+        )
         .map(adj => {
-          const variantData: ProductVariant =
-            product.hasVariation
-              ? product.variants.find(v => String(v.id) === adj.variantId)!
-              : {
-                  id: 'product',
-                  name: product.name,
-                  sku: product.sku,
-                  attributes: {},
-                  costPrice: 150,
-                  sellingPrice: 299.99,
-                  quantity: product.totalStock,
-                  threshold: 10,
-                  barcode: '',
-                  images: [],
-                };
-
-          return {
+          const payloadItem: AdjustmentPayloadItem = {
             variant_id: adj.variantId,
             new_quantity: adj.currentQuantity + adj.quantityChange,
-            reason: adj.quantityChange > 0 ? 'increase' : 'decrease',
+            reason: adj.quantityChange < 0 ? 'decrease' : 'increase',
             notes: 'Adjusted from UI',
           };
+
+          if (adj.newCostPrice !== adj.currentCostPrice) {
+            payloadItem.cost_price = adj.newCostPrice;
+          }
+          if (adj.newSellingPrice !== adj.currentSellingPrice) {
+            payloadItem.selling_price = adj.newSellingPrice;
+          }
+
+          return payloadItem;
         });
 
       if (payload.length === 0) {
@@ -259,6 +283,8 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
                       <TableHead className="font-semibold">Current Qty</TableHead>
                       <TableHead className="font-semibold">Adjustment</TableHead>
                       <TableHead className="font-semibold">New Total</TableHead>
+                      <TableHead className="font-semibold">Cost Price</TableHead>
+                      <TableHead className="font-semibold">Selling Price</TableHead>
                       <TableHead className="font-semibold">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -311,6 +337,30 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
                                   {adj.quantityChange > 0 ? '+' : ''}{adj.quantityChange}
                                 </span>
                               )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-xs text-gray-400">Current: {adj.currentCostPrice}</div>
+                              <Input
+                                type="number"
+                                value={adj.newCostPrice}
+                                onChange={(e) => handlePriceChange(idx, 'newCostPrice', parseFloat(e.target.value) || 0)}
+                                className="w-24 text-sm border border-gray-900 h-8"
+                                step="0.01"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-xs text-gray-400">Current: {adj.currentSellingPrice}</div>
+                              <Input
+                                type="number"
+                                value={adj.newSellingPrice}
+                                onChange={(e) => handlePriceChange(idx, 'newSellingPrice', parseFloat(e.target.value) || 0)}
+                                className="w-24 text-sm border border-gray-900 h-8"
+                                step="0.01"
+                              />
                             </div>
                           </TableCell>
                           <TableCell>

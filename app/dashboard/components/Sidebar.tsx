@@ -16,6 +16,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminDetail } from '@/app/utils/type';
 import { hasPermission } from '@/app/utils/permission';
+import { OfflineInventoryManager } from '@/app/pos/components/OfflineInventoryManager';
 
 
 const navigation = [
@@ -126,6 +127,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminDetail');
     onClose();
+     localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminDetail');
+        localStorage.removeItem('pos_session_time');          
+        OfflineInventoryManager.resetSnapshot();
     router.push('/auth/login');
   };
 
