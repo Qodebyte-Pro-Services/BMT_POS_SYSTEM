@@ -202,6 +202,7 @@ export function AdjustStockModal({ product, open, onOpenChange }: AdjustStockMod
       toast.success('Stock adjusted successfully');
       setAdjustments([]);
       onOpenChange(false);
+      window.location.reload();
     } catch (err) {
       console.error(err);
       toast.error('Failed to adjust stock');
