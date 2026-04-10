@@ -203,13 +203,16 @@ const [saving, setSaving] = useState(false);
 
         {/* KPI CARDS */}
         {kpi && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <>
           <span className='col-span-4 text-center text-sm text-muted-foreground'>Excludes Walk-ins</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Stat title="Total Customers" value={kpi.total_customers} icon={<Users />} />
             <Stat title="Credit Customers" value={kpi.credit_customers} icon={<CreditCard />} />
             <Stat title="Installments" value={kpi.installment_customers} icon={<ShoppingBag />} />
             <Stat title="Online Customers" value={kpi.online_customers} icon={<Globe />} />
           </div>
+          </>
+         
         )}
 
         {/* FILTERS */}
