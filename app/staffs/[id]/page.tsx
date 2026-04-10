@@ -41,6 +41,7 @@ type Staff = {
   address: string;
   state: string;
   role: string;
+  role_id: string;
   status: 'active' | 'inactive';
   createdAt: string;
   lastLogin?: string;
@@ -113,12 +114,30 @@ const fetchRoles = async () => {
     const data = await response.json();
 
    
-    const transformedRoles: Role[] = data.roles.map((role: Role) => ({
-      roles_id: role.roles_id,
-      role_name: role.role_name,
-      permissions: Array.isArray(role.permissions) ? role.permissions : [],
-      role_count: role.role_count || 0,
-    }));
+    const transformedRoles: Role[] = data.roles.map((role: { 
+      roles_id: string; 
+      role_name: string; 
+      permissions: string | string[]; 
+      role_count?: number 
+    }) => {
+      let parsedPermissions: string[] = [];
+      try {
+        if (Array.isArray(role.permissions)) {
+          parsedPermissions = role.permissions;
+        } else if (typeof role.permissions === "string" && role.permissions.trim() !== "") {
+          parsedPermissions = JSON.parse(role.permissions);
+        }
+      } catch (e) {
+        console.error("Error parsing permissions for role:", role.role_name, e);
+      }
+
+      return {
+        roles_id: role.roles_id,
+        role_name: role.role_name,
+        permissions: parsedPermissions,
+        role_count: role.role_count || 0,
+      };
+    });
 
     setRoles(transformedRoles);
     setError(null);
@@ -165,7 +184,8 @@ const mappedStaff: Staff = {
   phone: admin.phone ?? "",
   address: admin.address ?? "",
   state: admin.state ?? "",
-  role: admin.Role?.role_name ?? "",
+  role: admin.Role?.role_name ?? "No Role",
+  role_id: admin.admin_role ?? "",
   status: admin.status === "active" ? "active" : "inactive",
   createdAt: admin.createdAt,
   lastLogin: admin.last_login ?? undefined,
@@ -183,7 +203,7 @@ const mappedStaff: Staff = {
   phone: mappedStaff.phone ?? "",
   address: mappedStaff.address ?? "",
   state: mappedStaff.state ?? "",
-  role: roles.some(r => r.role_name === roleName) ? roleName : "",
+  role: roleName,
 });
 
 
@@ -558,7 +578,7 @@ const mappedStaff: Staff = {
         </div>
 
        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1  xl:grid-cols-3 gap-6">
 
           <div className="lg:col-span-1">
             <Card className="border border-gray-200 bg-gray-100  text-gray-900">
@@ -719,7 +739,7 @@ const mappedStaff: Staff = {
                     <h4 className="font-medium mb-3">Assigned Permissions</h4>
                     <div className="flex flex-wrap gap-2">
                       {roles
-                        .find(r => r.role_name === staff.role)
+                        .find(r => r.roles_id === staff.role_id)
                         ?.permissions.map((permission, index) => (
                           <Badge key={index} variant="outline" className="bg-white text-gray-900">
                             {permission.replace('_', ' ')}
