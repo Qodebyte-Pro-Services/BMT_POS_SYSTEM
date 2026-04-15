@@ -56,8 +56,12 @@ export function ExpensesTable({
     }
   };
 
-  const getCategoryName = (categoryId: string) => {
-    return categories.find((c) => c.expense_category_id === categoryId)?.name || 'Unknown';
+  const getCategoryName = (expense: Expense) => {
+    return (
+      categories.find((c) => c.expense_category_id === expense.expense_category_id)?.name || 
+      expense.expense_category?.name || 
+      'Unknown'
+    );
   };
 
   return (
@@ -125,7 +129,7 @@ export function ExpensesTable({
                   className="border-gray-700 hover:bg-gray-750"
                 >
                   <TableCell className="text-gray-200">
-                    {getCategoryName(expense.expense_category_id)}
+                    {getCategoryName(expense)}
                   </TableCell>
                   <TableCell className="text-gray-200 font-semibold">
                     ₦{Number(expense.expense_amount).toLocaleString()}
