@@ -126,7 +126,7 @@ export function SalesKPIs({ kpiData }: SalesKPIsProps) {
                     </div>
                     <div>
                       <div className="font-medium capitalize">
-                        {type === 'in-store' ? 'In-Store' : 'Online'}
+                        {type === 'in_store' ? 'In-Store' : 'Online'}
                       </div>
                       <div className="text-sm text-gray-500">
                         {data.count} transactions
