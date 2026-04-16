@@ -20,9 +20,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader, Check } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Loader, Check, ChevronsUpDown } from "lucide-react";
 import { Product } from '@/app/utils/type';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface Category {
   id: string | number;
@@ -56,6 +70,7 @@ export function EditProductModal({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingCategories, setFetchingCategories] = useState(true);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.bmtpossystem.com/api';
   
@@ -246,25 +261,50 @@ export function EditProductModal({
                 Loading categories...
               </div>
             ) : (
-              <Select
-                value={formData.category_id}
-                onValueChange={(value) => handleSelectChange('category_id', value)}
-                disabled={loading || fetchingCategories}
-              >
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-300">
-                  {categories.map((category) => (
-                    <SelectItem
-                      key={category.id}
-                      value={category.id.toString()}
-                    >
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={categoryOpen}
+                    className="w-full justify-between border-gray-300 font-normal"
+                    disabled={loading || fetchingCategories}
+                  >
+                    {formData.category_id
+                      ? categories.find((c) => c.id.toString() === formData.category_id)?.name
+                      : "Select a category"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search category..." />
+                    <CommandList>
+                      <CommandEmpty>No category found.</CommandEmpty>
+                      <CommandGroup className="max-h-[300px] overflow-y-auto">
+                        {categories.map((category) => (
+                          <CommandItem
+                            key={category.id}
+                            value={category.name}
+                            onSelect={() => {
+                              handleSelectChange('category_id', category.id.toString());
+                              setCategoryOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.category_id === category.id.toString() ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {category.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 

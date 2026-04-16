@@ -10,7 +10,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Plus, Trash2, Image as ImageIcon, Hash,Layers, RefreshCw, Loader } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, Hash, Layers, RefreshCw, Loader, Check, ChevronsUpDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -163,6 +177,7 @@ const [categoryId, setCategoryId] = useState<string>("");
 const [description, setDescription] = useState("");
 const [taxable, setTaxable] = useState(false);
 const [unit, setUnit] = useState("Pieces");
+const [categoryOpen, setCategoryOpen] = useState(false);
 const [categoryModalOpen, setCategoryModalOpen] = useState(false);
 const [newCategoryName, setNewCategoryName] = useState("");
   const [singleBarcode, setSingleBarcode] = useState<string>("");
@@ -775,35 +790,50 @@ const buildProductFormData = (payload: CreateProductPayload) => {
                 
                 <div>
                   <Label className='mb-2' htmlFor="category">Category</Label>
-              <Select onValueChange={setCategoryId} value={categoryId} disabled={categoriesLoading} >
-                  <SelectTrigger className="border-gray-900 border-2 shadow-lg">
-                    <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select category"} />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {categoriesLoading && (
-  <div className="flex items-center gap-2 text-sm text-gray-600">
-    <Loader className="h-4 w-4 animate-spin" />
-    Loading categories...
-  </div>
-)}
-                   {categoriesLoading ? (
-                        <div className="p-2 text-center text-sm text-gray-600">
-                          Loading categories...
-                        </div>
-                      ) : categories.length === 0 ? (
-                        <div className="p-2 text-center text-sm text-gray-600">
-                          No categories available
-                        </div>
-                      ) : (
-                        categories.map(cat => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))
-                      )}
-                  </SelectContent>
-                </Select>
+                  <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={categoryOpen}
+                        className="w-full justify-between border-gray-900 border-2 shadow-lg font-normal"
+                        disabled={categoriesLoading}
+                      >
+                        {categoryId
+                          ? categories.find((c) => c.id === categoryId)?.name
+                          : categoriesLoading ? "Loading categories..." : "Select category"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search category..." />
+                        <CommandList>
+                          <CommandEmpty>No category found.</CommandEmpty>
+                          <CommandGroup className="max-h-[300px] overflow-y-auto">
+                            {categories.map((cat) => (
+                              <CommandItem
+                                key={cat.id}
+                                value={cat.name}
+                                onSelect={() => {
+                                  setCategoryId(cat.id);
+                                  setCategoryOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    categoryId === cat.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {cat.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                  <Button
                     variant="link"
                     size="sm"

@@ -12,7 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Plus, Filter,  Upload,  CheckCircle, XCircle, AlertCircle, TrendingUp, DollarSign,  Tag, BarChart3, PieChart as PieChartIcon, Pencil, Trash, Loader, Trash2, Edit2 } from 'lucide-react';
+import { CalendarIcon, Plus, Filter, Upload, CheckCircle, XCircle, AlertCircle, TrendingUp, DollarSign, Tag, BarChart3, PieChart as PieChartIcon, Pencil, Trash, Loader, Trash2, Edit2, Check, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from '@/lib/utils';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays,  parseISO,isWithinInterval } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie, Cell, PieChart } from 'recharts';
 import { InventoryLayout } from '../inventory/components/InventoryLayout';
@@ -230,8 +239,11 @@ const [expenseFormData, setExpenseFormData] = useState<ExpenseFormData>({
  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<ExpenseCategory | null>(null);
 const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
-  const [formData, setFormData] = useState({ name: '' });
+const [formData, setFormData] = useState({ name: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expenseCategoryOpen, setExpenseCategoryOpen] = useState(false);
+  const [categoryCurrentPage, setCategoryCurrentPage] = useState(1);
+  const categoriesPerPage = 10;
 
 
    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.bmtpossystem.com/api';
@@ -568,6 +580,13 @@ const getXAxisDataKey = () => {
       .slice(0, 5);
   }, [filteredExpenses]);
 
+  const paginatedCategories = useMemo(() => {
+    const startIndex = (categoryCurrentPage - 1) * categoriesPerPage;
+    return categories.slice(startIndex, startIndex + categoriesPerPage);
+  }, [categories, categoryCurrentPage]);
+
+  const totalCategoryPages = Math.ceil(categories.length / categoriesPerPage);
+
  
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -860,25 +879,50 @@ const getXAxisDataKey = () => {
       <form onSubmit={handleCreateExpense} className="space-y-4 py-4">
         <div className="space-y-2">
           <Label htmlFor="category" className="text-gray-200">Category *</Label>
-          <Select 
-            value={expenseFormData.expense_category_id} 
-            onValueChange={(value) => setExpenseFormData({...expenseFormData, expense_category_id: value})}
-          >
-            <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100">
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
-              {categories.map(cat => (
-                <SelectItem 
-                  key={cat.expense_category_id} 
-                  value={cat.expense_category_id}
-                  className="text-gray-100"
-                >
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={expenseCategoryOpen} onOpenChange={setExpenseCategoryOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={expenseCategoryOpen}
+                className="w-full justify-between bg-gray-700 border-gray-600 text-gray-100 font-normal hover:bg-gray-600"
+              >
+                {expenseFormData.expense_category_id
+                  ? categories.find((cat) => cat.expense_category_id === expenseFormData.expense_category_id)?.name
+                  : "Select category"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0 bg-gray-800 border-gray-700">
+              <Command className="bg-gray-800 text-gray-100">
+                <CommandInput placeholder="Search category..." className="text-gray-100" />
+                <CommandList>
+                  <CommandEmpty>No category found.</CommandEmpty>
+                  <CommandGroup className="max-h-[300px] overflow-y-auto">
+                    {categories.map((cat) => (
+                      <CommandItem
+                        key={cat.expense_category_id}
+                        value={cat.name}
+                        onSelect={() => {
+                          setExpenseFormData({ ...expenseFormData, expense_category_id: cat.expense_category_id });
+                          setExpenseCategoryOpen(false);
+                        }}
+                        className="text-gray-100 hover:bg-gray-700 data-[selected='true']:bg-gray-700"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            expenseFormData.expense_category_id === cat.expense_category_id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {cat.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         
         <div className="space-y-2">
@@ -1489,7 +1533,7 @@ const getXAxisDataKey = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {categories.map((category) => (
+                  {paginatedCategories.map((category) => (
                     <TableRow
                       key={category.expense_category_id}
                       className="border-gray-700 hover:bg-gray-750"
@@ -1524,6 +1568,36 @@ const getXAxisDataKey = () => {
                   ))}
                 </TableBody>
               </Table>
+              
+              {totalCategoryPages > 1 && (
+                <div className="flex items-center justify-between mt-4 px-2">
+                  <p className="text-sm text-gray-400">
+                    Showing Page {categoryCurrentPage} of {totalCategoryPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCategoryCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={categoryCurrentPage === 1}
+                      className="border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCategoryCurrentPage(prev => Math.min(totalCategoryPages, prev + 1))}
+                      disabled={categoryCurrentPage === totalCategoryPages}
+                      className="border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
